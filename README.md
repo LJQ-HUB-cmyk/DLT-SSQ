@@ -203,6 +203,8 @@ python scripts/evaluate_picks.py oracle --game dlt --last 100 --seed 42
 
 # ② Web GUI — 浏览器开 http://127.0.0.1:9876
 python scripts/pick_gui.py
+# 或者双击项目根目录的 启动.bat (自动开浏览器)
+python scripts/launch_web.py
 
 # ③ 胆拖分析器 — 你的 70 注花了多少、期望是多少、剔除大奖后真实回多少
 python scripts/dan_tuo.py --draws 200000
@@ -460,6 +462,7 @@ python scripts/check_script_encoding.py --all      # PowerShell 脚本编码 (�
 │
 ├── docs/                设计与理论文档
 │   ├── README.md           文档索引
+│   ├── 测试指南.md         ★ 双彩种逐 Tab 实测指南 (17/17 通过)
 │   ├── dan_tuo_theory.md   ★ 胆拖结构理论 (超几何完整推导)
 │   ├── prize_rules_spec.md ★ 奖级规则规范 (唯一真相源)
 │   └── data_audit.md       数据完整性审计报告
