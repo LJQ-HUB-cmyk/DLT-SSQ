@@ -51,43 +51,41 @@ class Check:
 
 
 def run_checks(quick: bool = False) -> list:
+    """
+    本地 CI 检查项。
+
+    ★ 选标准 (2026-11-18 收敛):
+      只保留**能拦住真静默故障**的项 —— 每一项历史上都抓到过
+      "肉眼看数据完全正常"的问题。其余项降级为手动脚本, 不占 CI 时间。
+
+      砍掉的项 (降级为手动):
+        - 图表生成        → 生成物存在性, 不是逻辑正确性; 16 秒
+        - 核心模块导入    → 编译检查的子集, 几乎不可能失败
+        - 编译检查        → 几乎不可能失败
+        - 数据守卫测试    → 故障注入测的是 guard 自己, 半年没抓到过东西
+        - 文件完整性      → null bytes 是 2026-10 的一次性事故, 已根治
+        - 全量对拍抽样    → 37 秒; 改为手动/每日跑 (scripts/verify_all_draws.py)
+        - 胆拖方案对比    → 优化器测试已覆盖同样的结构计算
+    """
     py = sys.executable
     checks = [
+        # ---- 守门组: 期望值口径 + 核心数学 ----
         Check('单元测试', [py, 'tests/test_pick_advisor.py'], '核心库 8 个用例'),
-        Check('胆拖精确求解器', [py, 'tests/test_dan_tuo_exact.py'], '5 个性质验证'),
-        Check('胆拖结构优化器', [py, 'tests/test_dan_tuo_optimizer.py'], '5 个用例'),
-        Check('胆拖方案对比', [py, 'scripts/dantuo_final_compare.py'], '统一口径 7 方案'),
         Check('奖级一致性', [py, 'scripts/check_prize_consistency.py'],
               'PRIZE_RULES vs judge_prize'),
+        Check('胆拖精确求解器', [py, 'tests/test_dan_tuo_exact.py'], '5 个性质验证'),
+        Check('胆拖结构优化器', [py, 'tests/test_dan_tuo_optimizer.py'], '5 个用例'),
+
+        # ---- 守门组: 数据真伪与完整性 ----
         Check('数据完整性审计', [py, 'scripts/audit_data_integrity.py'],
-              '期号连续性 + 日期间隔'),
-        Check('脚本编码检查', [py, 'scripts/check_script_encoding.py', '--all'],
-              'PowerShell 需 UTF-8 BOM'),
+              '期号连续性 + 日期间隔 + 同日期检测'),
         Check('官方交叉验证', [py, 'scripts/verify_draws_against_official.py',
                                '--n', '2'], '本地库 vs 官方 API'),
-        Check('全量对拍抽样', [py, 'scripts/verify_all_draws.py',
-                               '--sample', '20'], '最近 20 期逐期对拍'),
-        Check('数据守卫测试', [py, 'tests/test_data_guard.py'], '故障注入 22 个用例'),
-        Check('文件完整性', [py, 'scripts/check_corrupt.py'], 'null bytes 损坏检测'),
         Check('健康检查', [py, 'scripts/health_check.py'], '11 项'),
-        Check('核心模块导入', [py, '-c', '''
-import sys
-mods = ['data.games','data.pick_advisor','data.dan_tuo_core','data.dan_tuo_exact',
-        'data.strategy_lab',
-        'data.hot_illusion','data.sports_odds','data.sports_arb','data.sports_lab2',
-        'data.jingcai_odds','data.data_guard','data.live_scan_service',
-        'data.data_fetcher','ui','core','analytics.probability_lab','scripts.pick_gui']
-bad = []
-for m in mods:
-    try: __import__(m)
-    except Exception as e: bad.append(f'{m}: {e}')
-if bad:
-    print('导入失败:', bad); sys.exit(1)
-print(f'OK {len(mods)} 个模块')
-'''], '17 个模块'),
-        Check('编译检查', [py, '-m', 'compileall', '-q',
-                           'data', 'core', 'analytics', 'scripts', 'sports',
-                           'tests', 'ui'], '语法'),
+
+        # ---- 守门组: 环境与前端 ----
+        Check('脚本编码检查', [py, 'scripts/check_script_encoding.py', '--all'],
+              'PowerShell 需 UTF-8 BOM'),
         Check('Web GUI 冒烟', [py, '-c', '''
 import sys
 from scripts.pick_gui import app
@@ -105,10 +103,6 @@ assert d['best']['n_bets'] * 2 <= 1680, '优化器超出预算'
 print(f'OK {n} Tabs, 优化器 {d["best"]["structure"]}')
 '''], '首页 + Tab 数 + 优化器'),
     ]
-    if not quick:
-        checks.append(
-            Check('图表生成', [py, 'scripts/make_headline_chart.py'],
-                  '号码彩门面图'))
     return checks
 
 

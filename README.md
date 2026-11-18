@@ -322,8 +322,27 @@ python scripts/dan_tuo_optimizer.py --budget 1680 --goal win \
 **但期望净收益还是 -790.22 元** —— 一个数都没变。
 优化器只回答"同样的钱怎么更容易中一次小奖"，不回答"怎么不亏"（那个无解）。
 
-## ⏰ 自动化维护 (Windows 计划任务)
+## 📉 竞彩赔率漂移分析 (基于自建快照库)
 
+![竞彩赔率漂移](reports/headline_odds_drift.png)
+
+用攒下的竞彩官方赔率快照（425 条 / 170 场 / 13 个有效日），三个"没有空间"的结论：
+
+| 问题 | 结果 | 含义 |
+|---|---|---|
+| 抽水率随时间漂移吗？ | 全局 **13.87%**，13 天 ρ=+0.47 但 **z=+1.77** | 无显著漂移，市场结构稳定 |
+| 跨联赛差异大吗？ | 前 12 联赛极差仅 **1.08pp** | 别为"换个联赛更便宜"折腾 |
+| 一场之内会变吗？ | 抽水率变化 **z=+1.14**（无）；赔率变化 z=+2.60 但**中位数 ≈ 0**、升 33 / 降 36 | **"择时下注"在抽水维度没有空间**，赔率漂移也无可靠方向 |
+
+> ⚠ 数据边界：只有竞彩官方赔率（无境外盘口 → 算不出跨市场套利），
+> 没有比赛结果（→ 检验不了"赔率能否预测胜负"），样本 13 个有效日（→ 只看方向）。
+
+```bash
+python scripts/odds_drift_analysis.py       # 完整分析
+python scripts/make_odds_drift_chart.py      # 生成三联图
+```
+
+## ⏰ 自动化维护 (Windows 计划任务)
 | 任务 | 时间 | 做什么 |
 |---|---|---|
 | `LotteryOddsSnapshot` | 每天 09:00 + 21:00 | 抓竞彩官方赔率存档（09:00 开盘 / 21:00 临场） |
@@ -393,6 +412,8 @@ python scripts/check_script_encoding.py --all      # PowerShell 脚本编码 (�
 │   ├── audit_data_integrity.py      数据完整性审计 (期号连续性/间隔/跨年)
 │   ├── verify_draws_against_official.py  本地库 vs 官方 API 交叉验证
 │   ├── verify_all_draws.py       全量对拍 (逐期核对 + --fix 修正)
+│   ├── odds_drift_analysis.py  竞彩赔率漂移分析 (抽水率/择时)
+│   ├── verify_desktop_gui.py   Desktop GUI 端到端验证
 │   ├── push_now.py           一键推送 (自动取 token, 绕开被挡的 git 协议)
 │   ├── check_script_encoding.py     Windows 脚本编码检查 (PS 需 UTF-8 BOM)
 │   ├── update_draws.py              开奖数据每日增量更新 (计划任务用)
