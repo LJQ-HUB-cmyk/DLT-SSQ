@@ -372,7 +372,35 @@ python scripts/dan_tuo_backtest_real.py --compare-optimized --budget 1680 \
 python scripts/dan_tuo_backtest_real.py --compare-optimized --random-control 12
 ```
 
+## 🔌 接入 WorkBuddy 开放平台
+
+核心能力已封装成 **MCP Server（6 个工具）** 和 **可上架的 Skill 包**。
+
+```bash
+python scripts/mcp_server.py --selftest    # MCP 工具自检
+python scripts/pack_skill.py               # 打包 Skill → dist/lottery-lab.zip
+```
+
+本地接入（桌面端 WorkBuddy，**不需要公网部署**）—— 写进 `~/.workbuddy/mcp.json`：
+
+```json
+{
+  "mcpServers": {
+    "lottery-lab": {
+      "command": "python",
+      "args": ["<项目路径>/scripts/mcp_server.py"]
+    }
+  }
+}
+```
+
+> 📄 完整的技术接入、**变现机制**（付费 Skill + 微信提现）、**合规红线**和
+> 商业模式分析见 [`docs/workbuddy_integration.md`](docs/workbuddy_integration.md)。
+> 结论先说：**技术上能接，但"C 端选号神器"不该做** —— 期望必亏，做不出长期生意；
+> 该做的是 **B 端给彩票店做工具** + **平台分成**。
+
 ## ⏰ 自动化维护 (Windows 计划任务)
+
 | 任务 | 时间 | 做什么 |
 |---|---|---|
 | `LotteryOddsSnapshot` | 每天 09:00 + 21:00 | 抓竞彩官方赔率存档（09:00 开盘 / 21:00 临场） |
